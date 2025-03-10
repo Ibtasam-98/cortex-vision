@@ -16,7 +16,7 @@ def train_svm(X_train, y_train, kernel_type):
     grid_search.fit(X_train, y_train)
     best_model = grid_search.best_estimator_
 
-    # Extract and visualize features
+    # Extract and visualize feature
     extract_and_visualize_features(X_train, y_train, kernel_type)
     return best_model, grid_search.best_params_
 
