@@ -3,13 +3,10 @@ import numpy as np
 import warnings
 from evaluation import evaluate_model, plot_metrics
 from preprocessing import load_images_from_folder, unsharp_mask
-from sklearn.metrics import classification_report
-
-from train_rf import train_random_forest
-from train_svm import train_svm
+from train_rf import train_tuned_random_forest, train_default_random_forest
+from train_svm import train_svm_default, train_hyperparameter_tuned_svm
 
 warnings.filterwarnings("ignore")
-
 
 TRAIN_FOLDER = 'dataset/train'
 TEST_FOLDER = 'dataset/test'
@@ -26,52 +23,78 @@ X_test = X_test.reshape(X_test.shape[0], -1)
 print("Training Data Shape:", X_train.shape)
 print("Testing Data Shape:", X_test.shape)
 
-# Train SVM models
-svm_linear, best_params_linear = train_svm(X_train, y_train, 'linear')
-svm_poly, best_params_poly = train_svm(X_train, y_train, 'poly')
-svm_rbf, best_params_rbf = train_svm(X_train, y_train, 'rbf')
+# Train Default SVM models
+default_svm_linear, default_params_linear = train_svm_default(X_train, y_train, 'linear')
+default_svm_poly, default_params_poly = train_svm_default(X_train, y_train, 'poly')
+default_svm_rbf, default_params_rbf = train_svm_default(X_train, y_train, 'rbf')
 
-# Train Random Forest model
-rf_model, best_params_rf = train_random_forest(X_train, y_train)
+# Train Tuned SVM models
+tuned_svm_linear, best_params_linear = train_hyperparameter_tuned_svm(X_train, y_train, 'linear')
+tuned_svm_poly, best_params_poly = train_hyperparameter_tuned_svm(X_train, y_train, 'poly')
+tuned_svm_rbf, best_params_rbf = train_hyperparameter_tuned_svm(X_train, y_train, 'rbf')
 
-print("===================================")
-print("Best Linear SVM Params:", best_params_linear)
-print("Best Polynomial SVM Params:", best_params_poly)
-print("Best RBF SVM Params:", best_params_rbf)
-print("Best Random Forest Params:", best_params_rf)
-print("===================================")
-
-# Evaluate models on training data
-train_acc_linear = svm_linear.score(X_train, y_train)
-train_acc_poly = svm_poly.score(X_train, y_train)
-train_acc_rbf = svm_rbf.score(X_train, y_train)
-train_acc_rf = rf_model.score(X_train, y_train)
-
-# Evaluate models on testing data
-acc_linear, df_linear = evaluate_model(svm_linear, X_test, y_test, "Linear SVM")
-acc_poly, df_poly = evaluate_model(svm_poly, X_test, y_test, "Polynomial SVM")
-acc_rbf, df_rbf = evaluate_model(svm_rbf, X_test, y_test, "RBF SVM")
-acc_rf, df_rf = evaluate_model(rf_model, X_test, y_test, "Random Forest")
+# Train Default and Tuned Random Forest models
+default_rf_model, default_best_params_rf = train_default_random_forest(X_train, y_train)
+tuned_rf_model, tuned_best_params_rf = train_tuned_random_forest(X_train, y_train)
 
 
-# Print training and testing accuracy
-print("===================================")
-print(f"Linear SVM Training Accuracy: {train_acc_linear * 100:.2f}%")
-print(f"Linear SVM Testing Accuracy: {acc_linear * 100:.2f}%\n")
+# Print Parameters
+print("========= DEFAULT SVM PARAMETERS =========")
+print("Linear SVM:", default_params_linear)
+print("Polynomial SVM:", default_params_poly)
+print("RBF SVM:", default_params_rbf)
 
-print(f"Polynomial SVM Training Accuracy: {train_acc_poly * 100:.2f}%")
-print(f"Polynomial SVM Testing Accuracy: {acc_poly * 100:.2f}%\n")
+print("========= TUNED SVM PARAMETERS =========")
+print("Linear SVM:", best_params_linear)
+print("Polynomial SVM:", best_params_poly)
+print("RBF SVM:", best_params_rbf)
 
-print(f"RBF SVM Training Accuracy: {train_acc_rbf * 100:.2f}%")
-print(f"RBF SVM Testing Accuracy: {acc_rbf * 100:.2f}%\n")
+print("========= RANDOM FOREST PARAMETERS =========")
+print("Default RF:", default_best_params_rf)
+print("Tuned RF:", tuned_best_params_rf)
 
-print(f"Random Forest Training Accuracy: {train_acc_rf * 100:.2f}%")
-print(f"Random Forest Testing Accuracy: {acc_rf * 100:.2f}%")
+# Evaluate SVM & RF models on Training Data
+train_default_acc_linear = default_svm_linear.score(X_train, y_train)
+train_default_acc_poly = default_svm_poly.score(X_train, y_train)
+train_default_acc_rbf = default_svm_rbf.score(X_train, y_train)
 
-print("===================================")
+train_tuned_acc_linear = tuned_svm_linear.score(X_train, y_train)
+train_tuned_acc_poly = tuned_svm_poly.score(X_train, y_train)
+train_tuned_acc_rbf = tuned_svm_rbf.score(X_train, y_train)
+
+# Now we can safely call .score() on the trained models
+train_default_acc_rf = default_rf_model.score(X_train, y_train)
+train_tuned_acc_rf = tuned_rf_model.score(X_train, y_train)
+
+
+# Evaluate SVM & RF models on Test Data
+default_acc_linear, default_df_linear = evaluate_model(default_svm_linear, X_test, y_test, "Linear SVM")
+default_acc_poly, default_df_poly = evaluate_model(default_svm_poly, X_test, y_test, "Polynomial SVM")
+default_acc_rbf, default_df_rbf = evaluate_model(default_svm_rbf, X_test, y_test, "RBF SVM")
+
+tuned_acc_linear, tuned_df_linear = evaluate_model(tuned_svm_linear, X_test, y_test, "Linear SVM")
+tuned_acc_poly, tuned_df_poly = evaluate_model(tuned_svm_poly, X_test, y_test, "Polynomial SVM")
+tuned_acc_rbf, tuned_df_rbf = evaluate_model(tuned_svm_rbf, X_test, y_test, "RBF SVM")
+
+default_acc_rf, default_df_rf = evaluate_model(default_rf_model, X_test, y_test, "Random Forest")
+tuned_acc_rf, tuned_df_rf = evaluate_model(tuned_rf_model, X_test, y_test, "Random Forest")
+
+# Print Accuracy Results
+print("========= MODEL ACCURACY RESULTS =========")
+print(f"Default Linear SVM - Train: {train_default_acc_linear * 100:.2f}% | Test: {default_acc_linear * 100:.2f}%")
+print(f"Default Polynomial SVM - Train: {train_default_acc_poly * 100:.2f}% | Test: {default_acc_poly * 100:.2f}%")
+print(f"Default RBF SVM - Train: {train_default_acc_rbf * 100:.2f}% | Test: {default_acc_rbf * 100:.2f}%")
+
+print(f"Tuned Linear SVM - Train: {train_tuned_acc_linear * 100:.2f}% | Test: {tuned_acc_linear * 100:.2f}%")
+print(f"Tuned Polynomial SVM - Train: {train_tuned_acc_poly * 100:.2f}% | Test: {tuned_acc_poly * 100:.2f}%")
+print(f"Tuned RBF SVM - Train: {train_tuned_acc_rbf * 100:.2f}% | Test: {tuned_acc_rbf * 100:.2f}%")
+
+print(f"Default Random Forest - Train: {train_default_acc_rf * 100:.2f}% | Test: {default_acc_rf * 100:.2f}%")
+print(f"Tuned Random Forest - Train: {train_tuned_acc_rf * 100:.2f}% | Test: {tuned_acc_rf * 100:.2f}%")
 
 # Visualize results
-plot_metrics(df_linear, df_poly, df_rbf, df_rf)
+plot_metrics(default_df_linear, default_df_poly, default_df_rbf, default_df_rf)
+plot_metrics(tuned_df_linear, tuned_df_poly, tuned_df_rbf, tuned_df_rf)
 
 # Load user image for prediction
 user_input_path = input("Enter image path: ")
@@ -87,22 +110,26 @@ user_img = unsharp_mask(user_img)
 user_img = user_img.reshape(1, -1)
 
 # Predictions
-pred_linear = svm_linear.predict(user_img)
-pred_poly = svm_poly.predict(user_img)
-pred_rbf = svm_rbf.predict(user_img)
-pred_rf = rf_model.predict(user_img)
+default_pred_linear = default_svm_linear.predict(user_img)
+default_pred_poly = default_svm_poly.predict(user_img)
+default_pred_rbf = default_svm_rbf.predict(user_img)
+default_pred_rf = default_rf_model.predict(user_img)
 
-print("===================================")
-print("\nPredictions for user image:")
-print("Linear SVM:", "Normal" if pred_linear == 0 else "Cataract")
-print("Polynomial SVM:", "Normal" if pred_poly == 0 else "Cataract")
-print("RBF SVM:", "Normal" if pred_rbf == 0 else "Cataract")
-print("Random Forest:", "Normal" if pred_rf == 0 else "Cataract")
+tuned_pred_linear = tuned_svm_linear.predict(user_img)
+tuned_pred_poly = tuned_svm_poly.predict(user_img)
+tuned_pred_rbf = tuned_svm_rbf.predict(user_img)
+tuned_pred_rf = tuned_rf_model.predict(user_img)
 
-print("===================================")
+# Print Predictions
+print("\n========= PREDICTIONS FOR USER IMAGE =========")
+print("Default Models:")
+print(f"  Linear SVM: {'Normal' if default_pred_linear == 0 else 'Cataract'}")
+print(f"  Polynomial SVM: {'Normal' if default_pred_poly == 0 else 'Cataract'}")
+print(f"  RBF SVM: {'Normal' if default_pred_rbf == 0 else 'Cataract'}")
+print(f"  Random Forest: {'Normal' if default_pred_rf == 0 else 'Cataract'}")
 
-print(f"Linear SVM Accuracy: {acc_linear * 100:.2f}%")
-print(f"Polynomial SVM Accuracy: {acc_poly * 100:.2f}%")
-print(f"RBF SVM Accuracy: {acc_rbf * 100:.2f}%")
-print(f"Random Forest Accuracy: {acc_rf * 100:.2f}%")
-print("===================================")
+print("\nTuned Models:")
+print(f"  Tuned Linear SVM: {'Normal' if tuned_pred_linear == 0 else 'Cataract'}")
+print(f"  Tuned Polynomial SVM: {'Normal' if tuned_pred_poly == 0 else 'Cataract'}")
+print(f"  Tuned RBF SVM: {'Normal' if tuned_pred_rbf == 0 else 'Cataract'}")
+print(f"  Tuned Random Forest: {'Normal' if tuned_pred_rf == 0 else 'Cataract'}")
