@@ -1,4 +1,4 @@
-# Cortex_vision (ML Backend)
+# Cortex Vision (ML Backend)
 
 This repository contains the Python-based machine learning backend for the Cortex Vision mobile application. This backend is responsible for receiving eye images, processing them using machine learning algorithms, and predicting the likelihood of cataracts. It exposes a Flask API for communication with the mobile application.
 
