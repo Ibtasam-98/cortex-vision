@@ -42,3 +42,24 @@ def plot_metrics(df_report_linear, df_report_poly, df_report_rbf, df_report_rf):
 
     plt.tight_layout()
     plt.show()
+
+def plot_accuracy(train_acc, test_acc, model_names):
+    n_models = len(model_names)
+    x = np.arange(n_models)
+    width = 0.35
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    rects1 = ax.bar(x - width/2, train_acc, width, label='Training Accuracy')
+    rects2 = ax.bar(x + width/2, test_acc, width, label='Testing Accuracy')
+
+    ax.set_ylabel('Accuracy')
+    ax.set_title('Training and Testing Accuracy by Model')
+    ax.set_xticks(x)
+    ax.set_xticklabels(model_names, rotation=45, ha="right")
+    ax.legend()
+
+    ax.bar_label(rects1, padding=3, fmt='%.2f')
+    ax.bar_label(rects2, padding=3, fmt='%.2f')
+
+    fig.tight_layout()
+    plt.show()

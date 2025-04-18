@@ -1,10 +1,11 @@
 import cv2
 import numpy as np
 import warnings
-from evaluation import evaluate_model, plot_metrics
+from evaluation import evaluate_model, plot_metrics, plot_accuracy
 from preprocessing import load_images_from_folder, unsharp_mask
 from train_rf import train_tuned_random_forest, train_default_random_forest
 from train_svm import train_svm_default, train_hyperparameter_tuned_svm
+import joblib
 
 warnings.filterwarnings("ignore")
 
@@ -37,6 +38,15 @@ tuned_svm_rbf, best_params_rbf = train_hyperparameter_tuned_svm(X_train, y_train
 default_rf_model, default_best_params_rf = train_default_random_forest(X_train, y_train)
 tuned_rf_model, tuned_best_params_rf = train_tuned_random_forest(X_train, y_train)
 
+# Save the trained models
+joblib.dump(default_svm_linear, 'model/svm/default_svm_linear.joblib')
+joblib.dump(default_svm_poly, 'model/svm/default_svm_poly.joblib')
+joblib.dump(default_svm_rbf, 'model/svm/default_svm_rbf.joblib')
+joblib.dump(tuned_svm_linear, 'model/svm/tuned_svm_linear.joblib')
+joblib.dump(tuned_svm_poly, 'model/svm/tuned_svm_poly.joblib')
+joblib.dump(tuned_svm_rbf, 'model/svm/tuned_svm_rbf.joblib')
+joblib.dump(default_rf_model, 'model/rf/default_rf_model.joblib')
+joblib.dump(tuned_rf_model, 'model/rf/tuned_rf_model.joblib')
 
 # Print Parameters
 print("========= DEFAULT SVM PARAMETERS =========")
@@ -66,7 +76,6 @@ train_tuned_acc_rbf = tuned_svm_rbf.score(X_train, y_train)
 train_default_acc_rf = default_rf_model.score(X_train, y_train)
 train_tuned_acc_rf = tuned_rf_model.score(X_train, y_train)
 
-
 # Evaluate SVM & RF models on Test Data
 default_acc_linear, default_df_linear = evaluate_model(default_svm_linear, X_test, y_test, "Linear SVM")
 default_acc_poly, default_df_poly = evaluate_model(default_svm_poly, X_test, y_test, "Polynomial SVM")
@@ -91,6 +100,41 @@ print(f"Tuned RBF SVM - Train: {train_tuned_acc_rbf * 100:.2f}% | Test: {tuned_a
 
 print(f"Default Random Forest - Train: {train_default_acc_rf * 100:.2f}% | Test: {default_acc_rf * 100:.2f}%")
 print(f"Tuned Random Forest - Train: {train_tuned_acc_rf * 100:.2f}% | Test: {tuned_acc_rf * 100:.2f}%")
+
+# Prepare data for plotting accuracy
+train_accuracies = [
+    train_default_acc_linear,
+    train_default_acc_poly,
+    train_default_acc_rbf,
+    train_tuned_acc_linear,
+    train_tuned_acc_poly,
+    train_tuned_acc_rbf,
+    train_default_acc_rf,
+    train_tuned_acc_rf
+]
+test_accuracies = [
+    default_acc_linear,
+    default_acc_poly,
+    default_acc_rbf,
+    tuned_acc_linear,
+    tuned_acc_poly,
+    tuned_acc_rbf,
+    default_acc_rf,
+    tuned_acc_rf
+]
+model_names = [
+    "Default Linear SVM",
+    "Default Poly SVM",
+    "Default RBF SVM",
+    "Tuned Linear SVM",
+    "Tuned Poly SVM",
+    "Tuned RBF SVM",
+    "Default RF",
+    "Tuned RF"
+]
+
+# Visualize training and testing accuracy
+plot_accuracy(train_accuracies, test_accuracies, model_names)
 
 # Visualize results
 plot_metrics(default_df_linear, default_df_poly, default_df_rbf, default_df_rf)
